@@ -1,9 +1,16 @@
-let method: () => string;
-let currentIncrementalID:number = 0;
+/**
+ * Returns a random UUID if available via `crypto.randomUUID()`,
+ * otherwise falls back to a simple random string.
+ *
+ * Uses lazy initialization to select the appropriate method only once.
+ *
+ * @returns {string} A UUID v4-like string or a fallback pseudo-random string.
+ *
+ * @example
+ * const uuid = getRandomUUID(); // "e7f42cabc" or "cfed45e1-..."
+ */
 
-export const getIncrementalID = (): string => {
-  return "iid-" + (++currentIncrementalID);
-}
+let method: () => string;
 
 export const getRandomUUID = () => {
   if (!method) {

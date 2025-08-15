@@ -1,6 +1,13 @@
 /**
- * Keeps only a single leading plus and digits. Removes any other characters.
- * Collapses any '+' that are not the very first character.
+ * Removes all characters except a single leading plus (+) and digits.
+ * If multiple plus signs are present, keeps only the first one (if at the start).
+ *
+ * @param raw - Raw input string to normalize.
+ * @returns A string containing only digits and at most one leading '+'.
+ *
+ * @example
+ * normalizePhoneInput("++12 34-56") // "+123456"
+ * normalizePhoneInput("00 123 456") // "00123456"
  */
 function normalizePhoneInput(raw: string): string {
     const s = (raw ?? "").trim().replace(/[^\d+]/g, "");
@@ -8,9 +15,15 @@ function normalizePhoneInput(raw: string): string {
 }
 
 /**
- * Converts common international prefix to '+'.
- * - If the string starts with '00', replaces it with '+'.
- * Returns a normalized candidate; still must be validated.
+ * Converts common international dialing prefix (00) to '+'.
+ * Leaves other formats untouched.
+ *
+ * @param raw - Raw phone string.
+ * @returns Normalized candidate string, still requires validation.
+ *
+ * @example
+ * toE164Candidate("003412345678") // "+3412345678"
+ * toE164Candidate("+3412345678") // "+3412345678"
  */
 function toE164Candidate(raw: string): string {
     const s = normalizePhoneInput(raw);
@@ -19,16 +32,28 @@ function toE164Candidate(raw: string): string {
 }
 
 /**
- * Strict E.164 validation.
- * Must be: '+' followed by 8..15 digits, first digit 1..9.
+ * Checks if the given phone string strictly matches E.164 format.
+ *
+ * E.164 format rules:
+ * - Must start with '+'
+ * - Must be followed by 8–15 digits
+ * - First digit after '+' must be 1–9
+ *
+ * @param phone - Phone number string to check.
+ * @returns True if valid E.164, false otherwise.
  */
 function isE164(phone: string): boolean {
     return /^\+[1-9]\d{7,14}$/.test(phone);
 }
 
 /**
- * Loose digit-count check ignoring any separators.
- * Returns true if the total digits count is within the range.
+ * Checks if the number of digits in a string falls within the given range.
+ * Ignores any non-digit characters.
+ *
+ * @param raw - Raw phone string.
+ * @param min - Minimum allowed digits (default 6).
+ * @param max - Maximum allowed digits (default 15).
+ * @returns True if digit count is within range, false otherwise.
  */
 function hasDigitsInRange(raw: string, min = 6, max = 15): boolean {
     const onlyDigits = (raw ?? "").replace(/\D/g, "");
@@ -39,15 +64,26 @@ function normalizeInput(value: string): string {
     return (value ?? "").trim();
 }
 
-
 /**
- * Validates a phone string with optional format and empty-handling.
+ * Validates a phone number string using either strict E.164 format or a loose digit-count check.
  *
- * - When format is 'e164', the value is normalized (00 -> '+') and checked strictly.
- * - When format is 'loose', common separators are allowed; only digits count is checked.
- * - If allowEmpty is true and the input is empty/whitespace, returns true.
+ * @param value - Phone number to validate.
+ * @param format - Validation mode: `"e164"` (strict) or `"loose"` (digit count only).
+ * @param allowEmpty - Whether empty/whitespace strings should be considered valid (default true).
+ * @param looseRange - Optional { min, max } for `"loose"` format (defaults: min=6, max=15).
+ * @returns True if valid according to chosen format, false otherwise.
+ *
+ * @example
+ * validatePhone("+34123456789") // true
+ * validatePhone("0034123456789") // true
+ * validatePhone("12345", "loose") // false
  */
-export function validatePhone(value: string, format: "e164" | "loose" = "e164", allowEmpty: boolean = true, looseRange?: { min?: number; max?: number }): boolean {
+export function validatePhone(
+    value: string,
+    format: "e164" | "loose" = "e164",
+    allowEmpty: boolean = true,
+    looseRange?: { min?: number; max?: number }
+): boolean {
     const input = normalizeInput(value);
     if (!input) return allowEmpty;
 
@@ -62,6 +98,17 @@ export function validatePhone(value: string, format: "e164" | "loose" = "e164", 
     return isE164(candidate);
 }
 
+/**
+ * Attempts to normalize a phone number to E.164 format.
+ *
+ * @param value - Phone number to normalize.
+ * @returns E.164 formatted string if valid, otherwise null.
+ *
+ * @example
+ * toE164OrNull("0034123456789") // "+34123456789"
+ * toE164OrNull("+34123456789") // "+34123456789"
+ * toE164OrNull("12345") // null
+ */
 export function toE164OrNull(value: string): string | null {
     const input = normalizeInput(value);
     if (!input) return null;
